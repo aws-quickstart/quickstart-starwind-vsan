@@ -18,9 +18,10 @@ To test that the deployment has been successful, perform the following steps:
 2. Add StarWind HA device to cluster. In Failover Cluster Manager, navigate to Cluster -> Storage -> Disks. Click Add Disk in the Actions panel, choose StarWind disks from the list and confirm the selection.
 3. If it is required to use StarWind HA device as a cluster shared volume (CSV), right-click the disk and select Add to Cluster Shared Volumes.
 4. Setup the Failover Cluster quorum. Create an SMB file share on the StarWind VSAN EC2 Witness instance that will host the file share witness for the Failover Cluster.
-5. After this, configure file share witness. For this, right-click the cluster node, navigate to More Actions -> Configure Cluster Quorum Settings and click Next.
-6. Select the quorum witness and click next.
-7. Select All Nodes (both StarWind VSAN EC2 Storage instances) and click Next.
-8. Select Configure a file share witness and click Next.
-9. Type the share path in the File Share Path field and click Next.
-10. Check the summary page and click Finish to complete the quorum settings
+5. Add an inbound rule to the StarWind VSAN EC2 Witness instance security group to allow SMB access from the StarWind VSAN Storage nodes management security group to allow Failover Cluster file share witness communication.
+6. After this, configure file share witness. For this, right-click the cluster node, navigate to More Actions -> Configure Cluster Quorum Settings and click Next.
+7. Select the quorum witness and click next.
+8. Select All Nodes (both StarWind VSAN EC2 Storage instances) and click Next.
+9. Select Configure a file share witness and click Next.
+10. Type the share path in the File Share Path field and click Next.
+11. Check the summary page and click Finish to complete the quorum settings
