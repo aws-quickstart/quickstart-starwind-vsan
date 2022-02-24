@@ -1,27 +1,35 @@
-//Include any postdeployment steps here, such as steps necessary to test that the deployment was successful. If there are no postdeployment steps leave this file empty.
-
 == Test the deployment
 
-To test that the deployment has been successful, perform the following steps:
-
-1.	Establish an RDP connection to both StarWind VSAN EC2 Storage instances and Witness instance.
-2.	On StarWind VSAN EC2 Storage and Witness instances, open StarWind Management Console, and connect the instances using their management IP addresses or DNS names. 
-3.	Verify that StarWind HA device is synchronized on both Storage instances and on the Witness instance, its mode is set to Witness. 
-4.	Verify that the Health Status of StarWind HA device displays “Storage is working properly” on all three instances. 
-5.	On both StarWind VSAN EC2 Storage instances, navigate to Disk Management and verify that the CSV disk is present and healthy. 
+. Establish a Remote Desktop Protocol (RDP) connection to both StarWind VSAN EC2 storage instances and to the witness EC2 instance.
+. Open the StarWind Management Console on all three EC2 instances. Connect the instances using their management Internet Protocol addresses (IP addresses) or Domain Name System (DNS) names.
+. Verify that the witness instance is synchronized and that its mode is set to *Witness*.
+. Verify that both storage instances (nodes 1 and 2) have a health status of `Storage is working properly`.
+. On both storage instances, navigate to Disk Management (in Windows, run compmgmt.msc and choose Disk Management). Verify that the replicated StarWind VSAN volume is present (it should be an additional volume with drive letter E:).
 
 == Postdeployment steps
 
-=== Configure Windows Server Failover Cluster
+At this point, StarWind VSAN specific configuration should be complete. Though since StarWind HA storage devices are being accessed using iSCSI by both StarWind VSAN EC2 storage instances (nodes 1 and 2), this can cause data corruption unless a clustering solution is implemented. Windows Server Failover Cluster can be used to manage the access.
 
-1. Deploy the Failover Cluster, set the required name and static IP addresses for it. Add any additional IP addresses needed for the cluster and its resources as secondary private IP addresses on the management network interface of the StarWind VSAN EC2 Storage instances. To create a Failover Cluster, please refer to https://www.starwindsoftware.com/resource-library/starwind-virtual-san-for-hyper-v-2-node-hyperconverged-scenario-with-windows-server-2016/#14bdf4cea7ba8ca523dcfb621c1969fa624feec3[Creating a Failover Cluster in Windows Server] in the StarWind VSAN technical guide.
-2. Add StarWind HA device to cluster. In Failover Cluster Manager, navigate to Cluster -> Storage -> Disks. Click Add Disk in the Actions panel, choose StarWind disks from the list and confirm the selection.
-3. If it is required to use StarWind HA device as a cluster shared volume (CSV), right-click the disk and select Add to Cluster Shared Volumes.
-4. Setup the Failover Cluster quorum. Create an SMB file share on the StarWind VSAN EC2 Witness instance that will host the file share witness for the Failover Cluster.
-5. Add an inbound rule to the StarWind VSAN EC2 Witness instance security group to allow SMB access from the StarWind VSAN Storage nodes management security group to allow Failover Cluster file share witness communication.
-6. After this, configure file share witness. For this, right-click the cluster node, navigate to More Actions -> Configure Cluster Quorum Settings and click Next.
-7. Select the quorum witness and click next.
-8. Select All Nodes (both StarWind VSAN EC2 Storage instances) and click Next.
-9. Select Configure a file share witness and click Next.
-10. Type the share path in the File Share Path field and click Next.
-11. Check the summary page and click Finish to complete the quorum settings
+Create and configure your Windows Server Failover Cluster as follows:
+
+. Create the failover cluster, setting the required name and static IP addresses for it. For details, refer to https://www.starwindsoftware.com/resource-library/starwind-virtual-san-for-hyper-v-2-node-hyperconverged-scenario-with-windows-server-2016/#14bdf4cea7ba8ca523dcfb621c1969fa624feec3[Creating a Failover Cluster in Windows Server^] in the StarWind VSAN technical guide.
+
+. (Optional) Add IP addresses needed for the cluster and its resources as secondary private IP addresses on the management network interface of the StarWind VSAN EC2 storage instances (nodes 1 and 2).
+
+. Add the StarWind HA devices to the cluster.
+.. In **Failover Cluster Manager**, choose *Cluster*, *Storage*, *Disks*.
+.. In the *Actions* panel, choose *Add Disk*.
+.. Choose *StarWind disks* from the list, and verify the selection.
+.. If you are using the StarWind HA device as a Cluster Shared Volume disk, open the context (right-click) menu for the disk, and choose *Add to Cluster Shared Volumes*.
+. Set up the failover cluster quorum by creating a Server Message Block (SMB) file share on the StarWind VSAN EC2 witness instance that will host the file-share witness for the failover cluster.
+. Add a security group rule to allow SMB access to the witness node.
+.. Open the https://console.aws.amazon.com/ec2/v2[Amazon EC2 console^], and choose *Security Groups*.
+.. Select the security group associated with the EC2 witness instance, and add a new inbound rule.
+.. Add a rule allowing port 445 Transmission Control Protocol (TCP) traffic from the security group associated with the storage instances.
+. Configure the file-share witness.
+.. Open the context (right-click) menu for the cluster node. Choose *More Actions*, *Configure Cluster Quorum Settings*, *Next*.
+.. Choose the quorum witness, and choose *Next*.
+.. Choose *All Nodes* (both StarWind VSAN EC2 storage instances), and choose *Next*.
+.. Choose *Configure a file share witness*, and choose *Next*.
+.. In the *File Share Path* box, enter the share path, and choose *Next*.
+.. Review the summary page. Then choose *Finish*.
